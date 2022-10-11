@@ -8,23 +8,97 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
-
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+#load packages
+```{r}
+library(tidyverse)
+library(patchwork)
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+# Problem 1
+### data import
+```{r}
+library(p8105.datasets)
+data("instacart")
+```
+This dataset contains `r nrow(instacart)` rows and `r ncol(instacart)` columns. Key variables of this dataset include `aisle` and `aisle_id`, which denote the name and identifier of the aisle, `product_id` and `product_name`, which denote the identifier and name of the product, `department_id` and `department`, which denote the identifier and name of the department, `order_dow` and `order_hour_of_day`, which denote the the day of the week and the hour of the day on which the order was placed, `days_since_prior_order`, which denotes days since the last order. Other variables not involved are out of interest for other research purposes.
+### illstrative examples of observations
+For example, in the first 8 consecutive rows, there are eight products bought by user #112108 in his/her 4th purchase at 10 am on Thursday, 9 days since his/her last order. The fist product is Bulgarian Yogurt in the **yogurt** aisle of the **dairy eggs** department.
+```{r}
+instacart[1:8,]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+### Qustion 1
+How many aisles are there, and which aisles are the most items ordered from?
+```{r}
+instacart %>% 
+  group_by(aisle) %>% 
+  summarise(n_obs=n()) %>% 
+  arrange(desc(n_obs))
+
+```
+There are `r instacart %>% distinct(aisle) %>% nrow()` different aisles in this dataset. `Fresh vegetables` is the aisle in which the most items order from (150609 items), `fresh fruits` is the second most frequently ordered aisle with 150473 items ordered. 
+
+### Question 2
+Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+```{r}
+instacart %>% 
+  group_by(aisle) %>% 
+  summarize(n_obs=n()) %>% 
+  filter(n_obs>10000) %>% 
+  mutate(aisle=fct_reorder(aisle,n_obs,.desc = TRUE)) %>% 
+  ggplot(aes(x=aisle,y=n_obs))+
+  geom_point(alpha = .5)+
+  labs(
+    title="Number of items ordered in each aisle (>10000)",
+    y="Number of items",
+    caption = "data from instacart"
+  )+
+  theme(axis.text.x = element_text(angle = 90,vjust=0.5 ,hjust = 1))+
+  scale_y_continuous(breaks = seq(10000,200000,by=30000),limits = c(10000,160000))
+
+```
+
+### Question 3
+Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+```{r}
+instacart %>% 
+  group_by(aisle,product_name) %>%
+  filter(aisle %in% c("baking ingredients", "dog food care","packaged vegetables fruits")) %>% 
+  summarize(n_obs=n()) %>% 
+  mutate(times_ranking=min_rank(desc(n_obs))) %>% 
+  filter(times_ranking<4) %>% 
+  select(aisle,product_name,n_obs) %>% 
+  arrange(desc(n_obs)) %>% 
+  knitr::kable(
+    col.names = c("Aisle","Top 3 popular items","Number of orders"),
+    align = "llc",
+    caption = "Top 3 popular items from certain aisles")
+
+```
+As intuitively presented in the table, 
+* In the `packaged vegetables fruits` aisle, the top 3 popular items are `Organic Baby Spinach` with 9784 order times, `Organic Raspberries` with 5546 order times, and `Organic Blueberries` with 4966 order times.
+* In the `baking ingredients` aisle, the top 3 popular items are `Light Brown Sugar` with 499 order times, `Pure Baking Soda` with 387 order times, and `	Cane Sugar` with 336 order times. 
+* In the `dog food care` aisle, the top 3 popular items are `Snack Sticks Chicken & Rice Recipe Dog Treats`, `Organix Chicken & Brown Rice Recipe`, and `Small Dog Biscuits`, with 30, 28, and 26 order times respectively.
+
+### Question 4 
+Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+```{r}
+instacart %>% 
+  filter(product_name %in% c("Pink Lady Apples","Coffee Ice Cream")) %>%
+  mutate(order_dow=recode_factor(order_dow,
+    `0`="Sun",`1`="Mon",`2`="Tue",`3`="Wed",`4`="Thu",`5`="Fri",`6`="Sat"
+  )) %>% 
+  group_by(product_name,order_dow) %>%
+  summarize(mean_orhd=mean(order_hour_of_day)) %>%
+  select(product_name,order_dow,mean_orhd) %>% 
+  pivot_wider(
+    names_from = order_dow,
+    values_from = mean_orhd
+  ) %>% 
+  knitr::kable(digits = 2)
+  
+```
+
