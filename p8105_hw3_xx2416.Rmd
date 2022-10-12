@@ -218,8 +218,7 @@ accel_df %>%
 ```
 This plot is really disgusting, so I do some change and make a new one.
 ```{r}
-accel_df %>% 
-  group_by(day_id) %>%
+
 ```
 
 
