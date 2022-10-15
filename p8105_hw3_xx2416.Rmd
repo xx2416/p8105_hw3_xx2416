@@ -41,7 +41,6 @@ For example, in the first 8 consecutive rows, there are eight products bought by
 instacart[1:8,]
 ```
 
-
 ### Qustion 1
 How many aisles are there, and which aisles are the most items ordered from?
 ```{r}
@@ -56,9 +55,8 @@ There are `r instacart %>% distinct(aisle) %>% nrow()` different aisles in this 
 ### Question 2
 Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
 
-To make the plot more readable, I make a point and a bar plot respectively, and use `patchwork` to present the two plots side by side. 
-```{r}
-aisle_point_plot<-
+To make the plot more readable, I make a point and a bar plot respectively.
+```{r point_plot_aisle}
   instacart %>% 
   group_by(aisle) %>% 
   summarize(n_obs=n()) %>% 
@@ -73,8 +71,8 @@ aisle_point_plot<-
   )+
   theme(axis.text.x = element_text(angle = 90,vjust=0.5 ,hjust = 1))+
   scale_y_continuous(breaks = seq(10000,200000,by=30000),limits = c(10000,160000))
-
-aisle_col_plot<-
+```
+```{r col_plot_aisle}
   instacart %>% 
   group_by(aisle) %>% 
   summarize(n_obs=n()) %>% 
@@ -90,8 +88,6 @@ aisle_col_plot<-
     caption = "data from instacart"
   )+
   theme(legend.position = "bottom")
-
-aisle_point_plot/aisle_col_plot
 ```
 
 ### Question 3
@@ -175,7 +171,7 @@ accel_df %>%
 ```
 
 The table of total activity on each day is shown above. To better discover the trends, two maps are made and presented.
-```{r}
+```{r trend_plot}
 total_trend1<-
   accel_df %>% 
   group_by(week,day) %>% 
@@ -198,7 +194,7 @@ Actually, I don't find any trends showed based on the data above.
 
 ### Question 3
 Make a single-panel plot that shows the 24-hour activity time courses for each day and use color to indicate day of the week. 
-```{r}
+```{r activity_time_plot}
 accel_df %>%
   mutate(`activity.*` = as.integer(`activity.*`)) %>% 
   ggplot(aes(x=`activity.*`,y=activity_counts,group=day_id,color=day))+
@@ -262,17 +258,17 @@ ny_noaa_df %>%
 ```
 ### Question 2
 Make a two-panel plot showing the average **max** temperature in January and in July in each station across years. 
-```{r}
+```{r average_tmax_Jan_Jul}
 ny_noaa_df %>% 
   filter(month %in% c("Jan","Jul")) %>%
   group_by(id,year,month) %>%
   summarize(mean_tmax=mean(tmax,na.rm=TRUE)) %>% 
   ggplot(aes(x=year,y=mean_tmax))+
-  geom_smooth(color="red",size=2)+
   geom_point(size=0.5,alpha=0.2)+
   geom_line(aes(group=id,color=id),alpha=0.3)+
   facet_grid(.~month)+
   scale_x_continuous(breaks = seq(1980,2010,by = 5))+
+  geom_smooth(color="red",size=2,alpha=1)+
   labs(
     y="Average max temperature of the month (degrees C)",
     title = "Average max temperature in January and in July in each station across year",
@@ -281,7 +277,7 @@ ny_noaa_df %>%
   theme(axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 0.5),legend.position = "none")
 ```
 
-From the plot above, we can find that the average max temperature in January fluctuates between -10 degree C and 10 degree C, and the average max temperature in July fluctuates between 20 and 35 degree C. The varies of average tmax tends to be bigger in Jan, and there are a few outliers in both months.
+From the plot above, we can find that the average max temperature in January fluctuates between -10 degree C and 10 degree C, and the average max temperature in July fluctuates between 20 and 35 degree C. The average max temperature in January across the year centered around 0 degree C, while that in July centered around 27 degree C. The varies of average tmax tends to be bigger in Jan, and there are a few outliers in both months. 
 
 ### Question 3
 Make a two-panel plot showing (i) tmax vs tmin for the full dataset (note that a scatterplot may not be the best option); and (ii) make a plot showing the distribution of snowfall values greater than 0 and less than 100 separately by year.
